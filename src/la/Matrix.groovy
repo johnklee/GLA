@@ -1,7 +1,42 @@
 package la
 
+import org.ejml.data.DenseMatrix64F
+import org.ejml.simple.SimpleMatrix
+
 class Matrix {
 	def data = []
+	
+	public Matrix(SimpleMatrix mtx)
+	{
+		DenseMatrix64F dm = mtx.getMatrix()
+		int r = dm.numRows
+		int c = dm.numCols		
+		r.times{ ri->
+			def row=[]
+			c.times { ci->
+				row << dm.get(ri, ci)
+			}
+			data << row
+		}		
+	}	
+	
+	public Matrix(DenseMatrix64F dm)
+	{
+		int r = dm.numRows
+		int c = dm.numCols
+		r.times{ ri->
+			def row=[]
+			c.times { ci->
+				row << dm.get(ri, ci)
+			}
+			data << row
+		}
+	}
+	
+	public Matrix(def d)
+	{
+		this.data=d	
+	}
 	
 	public Matrix(int r, int c, def d)
 	{
@@ -87,16 +122,23 @@ class Matrix {
 	 * 
 	 * @return Matrix object
 	 */
-	def t()
+	def t(boolean makeNew=false)
 	{
 		int nr=c(), nc=r()
 		def d = []
 		c().times { ci->
+			def row = []
 			data.each{ r->
-				d.add(r[ci])
+				row.add(r[ci])
 			}
+			d.add(row)
 		}
-		return new Matrix(nr, nc, d)
+		if(makeNew) return new Matrix(nr, nc, d)
+		else 
+		{
+			this.data = d
+			return this
+		}
 	}
 	
 	/**
@@ -118,18 +160,168 @@ class Matrix {
 		}	
 		throw new Exception(String.format("Not square matrix!\n%s", this))
 	}
-	def sr(int r1, int r2)
+	
+	/**
+	 * Translate to DenseMatrix64F
+	 * 
+	 * @return DenseMatrix64F object
+	 */
+	DenseMatrix64F toDM()
 	{
-		if(r1<r() && r2<r())
+		int r=r(),c=c()
+		def data = new double[r][c] as double[][]
+		r.times{ ri->
+			c.times{ ci->
+				data[ri][ci]=v(ri, ci)
+			}
+		}
+		return new DenseMatrix64F(data)
+	}
+	
+	/**
+	 * Translate to SimpleMatrix
+	 * 
+	 * @return SimpleMatrix object
+	 */
+	SimpleMatrix toSM()
+	{
+		return SimpleMatrix.wrap(toDM())
+	}
+	
+	def deepCopydata()
+	{
+		def ndata = []
+		data.each{ r->
+			def nr=[]
+			r.each{v->nr<<v}
+			ndata << nr
+		}
+		return ndata
+	}
+	
+	def divRow(int ri, double v, boolean makeNew=false)
+	{
+		if(ri<this.r())
 		{
-			
+			Matrix m=null
+			if(makeNew)
+			{
+				m = LA.newMtx3(deepCopydata())
+			}
+			else
+			{
+				m = this
+			}
+			m.c().times {
+				if(m.v(ri, it)==0.0) return
+				m.v(ri, it, (double)m.v(ri, it)/v)
+			}
+			return m
+		}
+		else throw new Exception("Exceed row size boundary!")
+	}
+	
+	/**
+	 * Swap row of Matrix.
+	 * 
+	 * @param i1
+	 * @param i2
+	 * @param makeNew
+	 * @return
+	 */
+	def sr(int i1, int i2, boolean makeNew=false)
+	{
+		if(i1<r() && i2<r())
+		{
+			Matrix m=null
+			if(makeNew)
+			{				
+				m = LA.newMtx3(deepCopydata())
+			}
+			else
+			{
+				m = this
+			}			
+			def t = m.data[i1]
+			m.data[i1]=m.data[i2]
+			m.data[i2]=t
+			return m
 		}	
-		else throw new Exception("Exceed row size!")
+		else throw new Exception("Exceed row size boundary!")
 	}	
+	
+	/**
+	 * Swap column of Matrix
+	 * 
+	 * @param i1
+	 * @param i2
+	 * @param makeNew
+	 * @return
+	 */
+	def sc(int i1, int i2, boolean makeNew=false)
+	{
+		if(i1<c() && i2<c())
+		{
+			Matrix m=null
+			if(makeNew)
+			{				
+				m = LA.newMtx3(deepCopydata())
+			}
+			else
+			{
+				m = this
+			}
+			m.data.each{ r->
+				def t=r[i1]
+				r[i1]=r[i2]
+				r[i2]=t
+			}
+		}
+		else throw new Exception("Exceed column size boundary!")
+	}
+	
+	/**
+	 * Row Dimension
+	 * @return
+	 */
 	int r(){return data.size()}
+	
+	/**
+	 * Column Dimension
+	 * @return
+	 */
 	int c(){return data.size()>0?data[0].size():0}
+	
+	/**
+	 * Row(i)
+	 * @param i: Row index
+	 * @return Array of Row(i)
+	 */
 	def r(int i){return data[i]}
+	
+	/**
+	 * Column(i)
+	 * @param i:Column index
+	 * @return Array of Column(i)
+	 */
 	def c(int i){return data.collect { r->	r[i]}}
+	
+	/**
+	 * Value of Matrix at M[ri,ci]
+	 * @param ri: Row index
+	 * @param ci: Column index
+	 * @return Value of matrix at specific position.
+	 */
+	def v(int ri, int ci){return val(ri,ci)}
+	
+	/**
+	 * Value of Matrix at M[ri,ci]
+	 * 
+	 * @param ri: Row index
+	 * @param ci: Column index
+	 * 
+	 * @return Value at M[ri,ci]
+	 */
 	def val(int ri, int ci)
 	{
 		if(ci>=c() || ri>=r()) throw new Exception(String.format("Out of size: %dx%d!", ri, ci))
@@ -138,16 +330,66 @@ class Matrix {
 			return data[ri][ci]
 		}	
 	}
-	def val(int ri, int ci, def v){data[ri][ci]=v}
+	
+	/**
+	 * Set value M[ri,ci]=v
+	 * @param ri: Row index
+	 * @param ci: Column index
+	 * @param v: Value to be set into M[ri,ci]
+	 * @return Original matrix
+	 */
+	def v(int ri, int ci, def v){return val(ri,ci,v)}
+	def val(int ri, int ci, def v){data[ri][ci]=v; return this}
 	def row2Mtx(int i){return new Matrix(1, c(), r(i))}
 	def col2Mtx(int i){return new Matrix(r(), 1, c(i))}
 	def size(){return [r(), c()]}
+	def copy()
+	{
+		def ndata = []
+		data.each{ row->
+			def nrow = []
+			row.each{v->nrow.add(v)}
+			ndata.add(nrow)
+		}
+		return new Matrix(ndata)
+	}
 	
+	def rowElim(si, m, di, boolean makeNew=true)
+	{
+		Matrix nm = null
+		if(makeNew) nm=this.copy()
+		else nm=this		
+		r(si).eachWithIndex{ v, i->
+			nm.v(di, i, nm.v(di, i)+v*m)
+		}
+		return nm
+	}
+
+	/**
+	 * Reduced-Row-Echelon-Form
+	 * 
+	 * @see https://en.wikibooks.org/wiki/Linear_Algebra/Row_Reduction_and_Echelon_Forms
+	 * @return
+	 */
+	def rref(boolean inPlace=false)
+	{
+		Matrix nm = (inPlace)?this.copy():this
+		// To-do
+		return nm
+	}
+		
 	@Override
 	public String toString(){
 		StringBuffer strBuf = new StringBuffer(String.format("Matrix(%dx%d):\n", this.r(), this.c()))
 		this.r().times{ i->
-			strBuf.append(String.format("%s\n", this.r(i)))
+			strBuf.append("| ")
+			StringBuffer rowBuf = new StringBuffer()
+			for(e in r(i))
+			{
+				rowBuf.append(String.format("%.02f\t", e))
+			}
+			strBuf.append(String.format("%s |\n", rowBuf.toString().trim()))
+			//strBuf.append(String.format("%s\n", this.r(i)))
 		}
 		return strBuf.toString()
 	}

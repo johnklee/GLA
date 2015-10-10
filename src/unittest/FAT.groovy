@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue
 import la.LA
 import la.Matrix
 
+import org.ejml.simple.SimpleMatrix
 import org.junit.Test
 
 class FAT {
@@ -35,7 +36,7 @@ class FAT {
 		Matrix A = LA.newMtx3(2, 3, [1,2,3,4,5,6])
 		Matrix B = LA.newMtx3(3, 2, [1,0,0,2,1,0])
 		Matrix C = A*B
-		printf("%s\n", C)
+				
 		// First column of C ---> c1
 		Matrix O = A.col2Mtx(0)*B.val(0, 0)+A.col2Mtx(1)*B.val(1, 0)+A.col2Mtx(2)*B.val(2, 0)
 		assertEquals(O.c(0), C.c(0))
@@ -48,6 +49,13 @@ class FAT {
 		// C(r1) = (Row 1 of A)*B
 		// C(r2) = (Row 2 of A)*B
 		// ...		
+		// First row of C ---> r1
+		O = B.row2Mtx(0)*A.val(0, 0)+B.row2Mtx(1)*A.val(0, 1)+B.row2Mtx(2)*A.val(0, 2)
+		assertEquals(O.r(0), C.r(0))
+		// Second row of C ---> r2
+		O = B.row2Mtx(0)*A.val(1, 0)+B.row2Mtx(1)*A.val(1, 1)+B.row2Mtx(2)*A.val(1, 2)
+		assertEquals(O.r(0), C.r(1))
+		
 		Matrix m = LA.newMtx3(2, 3, [1,2,3,4,5,6])
 		Matrix t = m.t()
 		assertEquals(t.r(), 3)
@@ -55,6 +63,34 @@ class FAT {
 		assertEquals(t.r(0), [1,4])
 		assertEquals(t.r(1), [2,5])
 		assertEquals(t.r(2), [3,6])
+	}
+	
+	@Test
+	public void testDMTranslation()
+	{
+		SimpleMatrix m = LA.newMtx3(3, 3, [1,2,3,4,5,6,7,8,9]).toSM()
+		SimpleMatrix p = LA.newMtx3(3, 1, [1,2,3]).toSM()
+		SimpleMatrix r = m.mult(p)
+		//printf("%s\n", r)
+		assertEquals(3, r.numRows())
+		assertEquals(1, r.numCols())
+		assertTrue(14.0==r.get(0, 0))
+		assertTrue(32.0==r.get(1, 0))
+		assertTrue(50.0==r.get(2, 0))
+	}
+	
+	@Test
+	public void testDivRow()
+	{
+		Matrix m = LA.newMtx3(2, 2, [2,4,6,8])
+		m.divRow(0, 2)
+		//printf("%s\n", m)
+		assertTrue(1.0==m.v(0,0))
+		assertTrue(2.0==m.v(0,1))
+		m.divRow(1, 2)
+		//printf("%s\n", m)
+		assertTrue(3.0==m.v(1,0))
+		assertTrue(4.0==m.v(1,1))
 	}
 	
 	@Test
