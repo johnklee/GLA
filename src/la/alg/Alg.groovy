@@ -3,7 +3,7 @@ package la.alg
 import la.Matrix
 
 class Alg {
-	static double MinmumDoubleAcy=0.0000000001
+	static double MinmumDoubleAcy=Double.MIN_VALUE
 	
 	public static int Rank(Matrix m)
 	{
@@ -25,6 +25,20 @@ class Alg {
 	public static Matrix Invert(Matrix m)
 	{
 		return new Matrix(m.toSM().invert())
+	}
+	
+	/**
+	 * Calculate the determinant of matrix
+	 * 
+	 * @see
+	 * 	https://en.wikipedia.org/wiki/Determinant
+	 * @param m: Matrix object
+	 * 
+	 * @return The determinant value of input matrix
+	 */
+	public static double Det(Matrix m)
+	{
+		return m.toSM().determinant()
 	}
 	
 	/**
@@ -63,13 +77,12 @@ class Alg {
 					if(nm.v(it, i)!=0)
 					{
 						nm.rowElim(i, -nm.v(it, i), it, false)
-						c.times {ci->
+						/*c.times {ci->
 							if(Math.abs(nm.v(it, ci))<MinmumDoubleAcy) 
-							{
-								//printf("Clean M[%d,%d]=%.010f...\n", it, ci, nm.v(it, ci))
+							{								
 								nm.v(it, ci, 0.0)
 							}
-						}						
+						}*/						
 					}
 				}
 			}

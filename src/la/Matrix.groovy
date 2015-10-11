@@ -124,16 +124,15 @@ class Matrix {
 	 */
 	def t(boolean makeNew=false)
 	{
-		int nr=c(), nc=r()
 		def d = []
-		c().times { ci->
+		c().times { ci->			
 			def row = []
-			data.each{ r->
-				row.add(r[ci])
-			}
+			r().times {
+				row.add(v(it, ci))
+			}			
 			d.add(row)
-		}
-		if(makeNew) return new Matrix(nr, nc, d)
+		}		
+		if(makeNew) return new Matrix(d)
 		else 
 		{
 			this.data = d
@@ -382,13 +381,15 @@ class Matrix {
 	public String toString(){
 		StringBuffer strBuf = new StringBuffer(String.format("Matrix(%dx%d):\n", this.r(), this.c()))
 		this.r().times{ i->
-			strBuf.append("| ")
+			strBuf.append("|")
 			StringBuffer rowBuf = new StringBuffer()
 			for(e in r(i))
 			{
-				rowBuf.append(String.format("%.02f\t", e))
+				if(e instanceof Double) rowBuf.append(String.format("%.02f\t", e))
+				else if(e instanceof Integer) rowBuf.append(String.format("%02d\t", e))
+				else rowBuf.append(String.format("%s\t", e))
 			}
-			strBuf.append(String.format("%s |\n", rowBuf.toString().trim()))
+			strBuf.append(String.format("%s|\n", rowBuf.toString().trim()))
 			//strBuf.append(String.format("%s\n", this.r(i)))
 		}
 		return strBuf.toString()

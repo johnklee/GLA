@@ -9,6 +9,20 @@ import org.ejml.simple.SimpleMatrix
 import org.junit.Test
 
 class FAT {
+	
+	@Test
+	public void testTranspose()
+	{
+		Matrix m = LA.newMtx3(2, 2, [1,2,3,4])
+		m.t()
+		assertEquals(m.c(), 2)
+		assertEquals(m.r(), 2)
+		assertEquals(m.v(0, 0), 1)
+		assertEquals(m.v(0, 1), 3)
+		assertEquals(m.v(1, 0), 2)
+		assertEquals(m.v(1, 1), 4)
+	}
+	
 	@Test
 	public void testCreation() {
 		int c=3, r=3;
